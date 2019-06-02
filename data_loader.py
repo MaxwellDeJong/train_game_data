@@ -7,6 +7,7 @@ https://stanford.edu/~shervine/blog/pytorch-how-to-generate-data-parallel
 import torch
 from torch.utils import data
 from cv2 import imdecode
+    
 
 class GameFrameData(data.Dataset):
     
