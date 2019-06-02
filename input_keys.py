@@ -15,6 +15,9 @@ def find_key(one_hot, trimmed_one_hot_dict):
         if (trimmed_one_hot_dict[key] == one_hot):
             return key
         
+    print('Prediction: ', one_hot)
+    print('One hot dict: ', trimmed_one_hot_dict)
+        
     print('Error. Key not found.')
     
     

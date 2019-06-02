@@ -53,8 +53,20 @@ def read_screen(means, stds):
             transforms.Normalize(means, stds)
             ])
     
-    return frame_transform(screen)
+    torch_screen = frame_transform(screen)
     
+    return torch_screen
+    
+
+def prediction_to_one_hot(pred):
+    
+    one_hot = torch.zeros(pred.numel(), dtype=torch.int32)
+    
+    max_idx = pred.argmax().item()
+    one_hot[max_idx] = 1
+    
+    return one_hot
+  
     
 def eval_net():
         
@@ -69,23 +81,29 @@ def eval_net():
     model = load_model()
     model = model.to(device)
     
+    time.sleep(9)
+    print('Done sleeping!')
+    
     paused = False
     keys = key_check()
     
-    prev_key = None
+    prev_key = ''
     
     while True:
         
         if not paused:
         
-            screen = read_screen()
-            _, one_hot = torch.max(model(screen), 1)
-            prev_key = act_on_prediction(one_hot, one_hot_dict, prev_key, dx_key_dict)
+            screen = read_screen(means, stds)
+            screen = screen.to(device)
+            screen = screen[None]
+            pred = model(screen)
+            one_hot = prediction_to_one_hot(pred)
+            one_hot.cpu()
+            prev_key = act_on_prediction(one_hot.tolist(), one_hot_dict, prev_key, dx_key_dict)
             
         else:
             if 'X' in keys:
                 break
-        
         
         if 'T' in keys:
             
