@@ -53,7 +53,7 @@ def main(load_model):
     else:
         initial_epoch = 0
 
-    #writer = SummaryWriter('D:/steep_training/ski-race/balanced/log/')
+    writer = SummaryWriter('D:/steep_training/ski-race/balanced/log/')
     
     model = model.to(device)
     
@@ -86,6 +86,9 @@ def main(load_model):
 
                 print('Batch accuracy: ', batch_acc / 16)
                 print('Batch loss: ', running_loss / 16)
+
+                writer.add_scaler('Train/Loss', running_loss, curr_batch * 16)
+                writer.add_scaler('Train/Accuracy', batch_acc, curr_batch * 16)
 
                 running_loss = 0.0
 
@@ -121,6 +124,10 @@ def main(load_model):
             print('FINISHED EPOCH ', epoch)
             print('Validation loss: ', cum_loss / len(validation_generator))
             print('Validation accuracy: ', accuracy / len(validation_generator))
+
+
+            writer.add_scaler('Val/Loss', cum_loss / len(validation_generator), epoch)
+            writer.add_scaler('Val/Accuracy', accuracy / len(validation_generator), epoch)
 
         checkpoint_state = {'epoch': epoch,
                         'state_dict': model.state_dict(),
