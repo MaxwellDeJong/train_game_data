@@ -11,6 +11,26 @@ from torch import nn, optim
 import torch.backends.cudnn as cudnn
 from tensorboardX import SummaryWriter
 
+
+def save_checkpoint(state):
+
+    filename = 'D:/steep_training/ski-race/balanced/model/inceptionresnetv2.pth'
+
+    torch.save(state, filename)
+
+
+def load_checkpoint(model, optimizer):
+
+    filename = 'D:/steep_training/ski-race/balanced/model/inceptionresnetv2.pth'
+
+    checkpoint = torch.load(filename)
+
+    model.load_state_dict(checkpoint['state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer'])
+
+    return checkpoint['epoch']
+
+
 def main(load_model):
 
     device = torch.device('cuda:0')
@@ -21,25 +41,29 @@ def main(load_model):
               'num_workers': 6}
     
     (training_generator, validation_generator) = load_generators(params)
-    
-    if load_model:
-        model = torch.load('D:/steep_training/ski-race/balanced/model/inceptionresnetv2.pth')
-    else:
-        model = load_inceptionresnetv2()
-    #writer = SummaryWriter('D:/steep_training/ski-race/balanced/log/')
-    
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
     
+    model = load_inceptionresnetv2()
+
+    if (load_model):
+        initial_epoch = load_checkpoint(model)
+
+    else:
+        initial_epoch = 0
+
+    #writer = SummaryWriter('D:/steep_training/ski-race/balanced/log/')
+    
     model = model.to(device)
     
-    initial_epoch = 30
     max_epoch = 40
     
     for epoch in range(initial_epoch, max_epoch):
         
         curr_batch = 0
         running_loss = 0.0
+
         # Train
         for local_batch, local_labels in training_generator:
             local_batch, local_labels = local_batch.to(device), local_labels.to(device)
@@ -55,10 +79,24 @@ def main(load_model):
             if (curr_batch % 16 == 0):
                 print('Have analyzed ', curr_batch * 16, ' frames in epoch ', epoch)
                 
-                if (curr_batch % 80 == 0):
-        
-                    print('Batch loss: ', running_loss / 80)
-                    running_loss = 0.0
+                ps = torch.exp(logps)
+                max_preds = torch.max(ps, 1)[1]
+                max_true = torch.max(local_labels, 1)[1]
+                batch_acc = max_preds.eq(max_true).sum().item()
+
+                print('Batch accuracy: ', batch_acc / 16)
+                print('Batch loss: ', running_loss / 16)
+
+                running_loss = 0.0
+
+            if (curr_batch % 1250 == 0):
+
+                checkpoint_state = {'epoch': epoch,
+                        'state_dict': model.state_dict(),
+                        'optimizer: ', optimizer.state_dict()
+                        }
+
+                save_checkpoint(checkpoing_state)
                             
             curr_batch += 1
             
@@ -83,8 +121,14 @@ def main(load_model):
             print('FINISHED EPOCH ', epoch)
             print('Validation loss: ', cum_loss / len(validation_generator))
             print('Validation accuracy: ', accuracy / len(validation_generator))
-            
-        torch.save(model, 'D:/steep_training/ski-race/balanced/model/inceptionresnetv2.pth')
+
+        checkpoint_state = {'epoch': epoch,
+                        'state_dict': model.state_dict(),
+                        'optimizer: ', optimizer.state_dict()
+                        }
+
+        save_checkpoint(checkpoing_state)
+ 
         
 if __name__ == '__main__':
     main(True)
