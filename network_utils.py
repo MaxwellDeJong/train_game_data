@@ -11,13 +11,20 @@ from test_train_split import get_test_train_partition
 from torch.utils import data
 from torchvision import transforms
 
-def load_label_dict():
 
-    label_dict_filename = 'D:/steep_training/ski-race/balanced/label_dict.pkl'
-    with open(label_dict_filename, 'rb') as handle:
-        label_dict = pickle.load(handle)
+def load_label_dicts():
+
+    training_label_filename = 'D:/steep_training/ski-race/balanced/training_label_dict.pkl'
+    validation_label_filename = 'D:/steep_training/ski-race/balanced/validation_label_dict.pkl'
+
+    with open(training_label_filename, 'rb') as handle:
+        training_label_dict = pickle.load(handle)
+
+    with open(validation_label_filename, 'rb') as handle:
+        validation_label_dict = pickle.load(handle)
         
-    return label_dict
+    return (training_label_dict, validation_label_dict)
+
 
 def load_normalization_stats():
     
@@ -31,7 +38,7 @@ def load_normalization_stats():
 
 def load_generators(params):
     
-    label_dict = load_label_dict()
+    (training_label_dict, validation_label_dict) = load_label_dict()
     (means, stds) = load_normalization_stats()
     
     frame_transform = transforms.Compose([
@@ -41,8 +48,8 @@ def load_generators(params):
 
     partition = get_test_train_partition(label_dict)
 
-    training_set = GameFrameData(partition['train'], label_dict, frame_transform)
-    validation_set = GameFrameData(partition['validation'], label_dict, frame_transform)
+    training_set = GameFrameData(partition['train'], training_label_dict, frame_transform)
+    validation_set = GameFrameData(partition['validation'], validation_label_dict, frame_transform)
 
     training_generator = data.DataLoader(training_set, **params)
     validation_generator = data.DataLoader(validation_set, **params)

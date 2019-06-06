@@ -43,7 +43,7 @@ def main(load_model):
     (training_generator, validation_generator) = load_generators(params)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     
     model = load_inceptionresnetv2()
 
@@ -135,6 +135,8 @@ def main(load_model):
                         }
 
         save_checkpoint(checkpoing_state)
+
+    writer.close()
  
         
 if __name__ == '__main__':
