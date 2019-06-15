@@ -39,7 +39,7 @@ class GameFrameData(data.Dataset):
         
         ID = self.list_IDs[idx]
 
-        filename = 'D:/steep_training/ski-race/balanced/' + self.file_prefix + '_frame-{}.npy'.format(ID)
+        filename = 'F:/balanced/' + self.file_prefix + '_frame-{}.npy'.format(ID)
 
         X = npy_loader(filename, self.transform)
         y = torch.LongTensor(self.labels[ID])

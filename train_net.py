@@ -10,6 +10,7 @@ import torch
 from torch import nn, optim
 import torch.backends.cudnn as cudnn
 from tensorboardX import SummaryWriter
+import time
 
 
 def save_checkpoint(state):
@@ -36,28 +37,30 @@ def main(load_model):
     device = torch.device('cuda:0')
     cudnn.benchmark = True
     
-    params = {'batch_size': 16,
+    params = {'batch_size': 32,
               'shuffle': True,
-              'num_workers': 6}
+              'num_workers': 0}
     
     (training_generator, validation_generator) = load_generators(params)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     
     model = load_inceptionresnetv2()
+    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        
+    model = model.to(device)
 
     if (load_model):
-        initial_epoch = load_checkpoint(model)
+        initial_epoch = load_checkpoint(model, optimizer)
 
     else:
-        initial_epoch = 0
+        initial_epoch = 0        
 
     writer = SummaryWriter('D:/steep_training/ski-race/balanced/log/')
+ 
+    max_epoch = 30
     
-    model = model.to(device)
-    
-    max_epoch = 40
+    time0 = time.time()
     
     for epoch in range(initial_epoch, max_epoch):
         
@@ -78,6 +81,7 @@ def main(load_model):
             
             if (curr_batch % 16 == 0):
                 print('Have analyzed ', curr_batch * 16, ' frames in epoch ', epoch)
+                print('Total runtime: ', (time.time() - time0) / 60)
                 
                 ps = torch.exp(logps)
                 max_preds = torch.max(ps, 1)[1]
@@ -87,19 +91,19 @@ def main(load_model):
                 print('Batch accuracy: ', batch_acc / 16)
                 print('Batch loss: ', running_loss / 16)
 
-                writer.add_scaler('Train/Loss', running_loss, curr_batch * 16)
-                writer.add_scaler('Train/Accuracy', batch_acc, curr_batch * 16)
+                writer.add_scalar('Train/Loss', running_loss, curr_batch * 16)
+                writer.add_scalar('Train/Accuracy', batch_acc, curr_batch * 16)
 
                 running_loss = 0.0
 
-            if (curr_batch % 1250 == 0):
+            if (curr_batch % 2000 == 0):
 
                 checkpoint_state = {'epoch': epoch,
                         'state_dict': model.state_dict(),
-                        'optimizer: ', optimizer.state_dict()
+                        'optimizer': optimizer.state_dict()
                         }
 
-                save_checkpoint(checkpoing_state)
+                save_checkpoint(checkpoint_state)
                             
             curr_batch += 1
             
@@ -126,15 +130,15 @@ def main(load_model):
             print('Validation accuracy: ', accuracy / len(validation_generator))
 
 
-            writer.add_scaler('Val/Loss', cum_loss / len(validation_generator), epoch)
-            writer.add_scaler('Val/Accuracy', accuracy / len(validation_generator), epoch)
+            writer.add_scalar('Val/Loss', cum_loss / len(validation_generator), epoch)
+            writer.add_scalar('Val/Accuracy', accuracy / len(validation_generator), epoch)
 
         checkpoint_state = {'epoch': epoch,
                         'state_dict': model.state_dict(),
-                        'optimizer: ', optimizer.state_dict()
+                        'optimizer': optimizer.state_dict()
                         }
 
-        save_checkpoint(checkpoing_state)
+        save_checkpoint(checkpoint_state)
 
     writer.close()
  
