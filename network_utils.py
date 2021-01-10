@@ -12,10 +12,10 @@ from torch.utils import data
 from torchvision import transforms
 
 
-def load_label_dicts():
+def load_label_dicts(dirname='ski-race'):
 
-    training_label_filename = 'D:/steep_training/ski-race/balanced/training_label_dict.pkl'
-    validation_label_filename = 'D:/steep_training/ski-race/balanced/validation_label_dict.pkl'
+    training_label_filename = 'E:/steep_training/' + dirname + '/balanced/training_label_dict.pkl'
+    validation_label_filename = 'E:/steep_training/' + dirname + '/balanced/validation_label_dict.pkl'
 
     with open(training_label_filename, 'rb') as handle:
         training_label_dict = pickle.load(handle)
@@ -26,9 +26,9 @@ def load_label_dicts():
     return (training_label_dict, validation_label_dict)
 
 
-def load_normalization_stats():
+def load_normalization_stats(dirname='ski-race'):
     
-    stats_arr = np.load('D:/steep_training/ski-race/balanced/normalization_weights.npy')
+    stats_arr = np.load('E:/steep_training/' + dirname + '/balanced/normalization_weights.npy')
     
     means = stats_arr[0]
     stds = stats_arr[1]
@@ -36,20 +36,14 @@ def load_normalization_stats():
     return (means, stds)
 
 
-def load_generators(params):
+def load_generators(params, dirname='ski-race'):
     
-    (training_label_dict, validation_label_dict) = load_label_dicts()
-    (means, stds) = load_normalization_stats()
-    
-    frame_transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(means, stds)
-            ])
+    (training_label_dict, validation_label_dict) = load_label_dicts(dirname=dirname)
 
     partition = get_test_train_partition(training_label_dict, validation_label_dict)
 
-    training_set = GameFrameData(partition['train'], training_label_dict, frame_transform)
-    validation_set = GameFrameData(partition['validation'], validation_label_dict, frame_transform)
+    training_set = GameFrameData(partition['train'], training_label_dict, dirname=dirname)
+    validation_set = GameFrameData(partition['validation'], validation_label_dict, dirname=dirname)
 
     training_generator = data.DataLoader(training_set, **params)
     validation_generator = data.DataLoader(validation_set, **params)

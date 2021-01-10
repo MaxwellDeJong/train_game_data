@@ -8,23 +8,15 @@ import torch
 import numpy as np
 from torch.utils import data
 from cv2 import imdecode
-    
-
-def npy_loader(filename, transform):
-    
-    sample = np.load(filename)
-    sample_decompressed = imdecode(sample, 1)
-    
-    return transform(sample_decompressed)
 
 
 class GameFrameData(data.Dataset):
     
-    def __init__(self, list_IDs, labels, transform, train=True):
+    def __init__(self, list_IDs, labels, train=True, dirname='ski-race'):
         
         self.labels = labels
         self.list_IDs = list_IDs
-        self.transform = transform
+        self.dirname= dirname
 
         if train:
             self.file_prefix = 'training'
@@ -39,9 +31,9 @@ class GameFrameData(data.Dataset):
         
         ID = self.list_IDs[idx]
 
-        filename = 'F:/balanced/' + self.file_prefix + '_frame-{}.npy'.format(ID)
+        filename = 'F:/' + self.dirname + '/' + self.file_prefix + '_frame-{}.pt'.format(ID)
 
-        X = npy_loader(filename, self.transform)
+        X = torch.load(filename)
         y = torch.LongTensor(self.labels[ID])
         
         return (X, y)
